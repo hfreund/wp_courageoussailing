@@ -1,0 +1,20 @@
+/* Admin styles */
+
+.wc_bookings_calendar_form .calendar_days .bookings li {
+    width: 100%;
+    max-width: 200px;
+}
+
+.wc_bookings_calendar_form .calendar_days .bookings {
+    white-space: initial;
+}
+
+.wc_bookings_calendar_form .calendar_days .bookings li a {
+    padding: 8px;
+    height: calc(100% - 16px);
+    widows: initial;
+}
+
+.wc_bookings_calendar_form .calendar_days .bookings li:hover {
+    z-index: 1000;
+}
