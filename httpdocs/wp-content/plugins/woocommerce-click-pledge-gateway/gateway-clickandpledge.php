@@ -3,11 +3,12 @@
 Plugin Name: WooCommerce Click & Pledge Gateway
 Plugin URI: http://manual.clickandpledge.com/
 Description: With Click & Pledge, Accept all major credit cards directly on your WooCommerce website with a seamless and secure checkout experience.<a href="http://manual.clickandpledge.com/" target="_blank">Click Here</a> to get a Click & Pledge account.
-Version: 2.100.002
+Version: 2.100.004
 Author: Click & Pledge
 Author URI: http://www.clickandpledge.com
 */
 @ini_set('display_errors', 0);
+error_reporting(E_ALL);
 add_action('plugins_loaded', 'woocommerce_clickandpledge_init', 0);
 
 function woocommerce_clickandpledge_init() {
@@ -53,6 +54,7 @@ function woocommerce_clickandpledge_init() {
 			$this->enabled 			= $this->settings['enabled'];
 			$this->AccountID 	    = $this->settings['AccountID'];
 			$this->AccountGuid    	= $this->settings['AccountGuid'];
+			$this->ConnectCampaignAlias    	= $this->settings['ConnectCampaignAlias'];
 			$this->testmode 		= $this->settings['testmode'];
 			$this->defaultpayment   = $this->settings['DefaultpaymentMethod'];
 			$this->ReferenceNumber_Label   = $this->settings['ReferenceNumber_Label'];
@@ -248,7 +250,14 @@ function woocommerce_clickandpledge_init() {
 								'desc_tip'    => true,
 							),
 				
-											
+							'ConnectCampaignAlias' => array(
+								'title' => __( 'Connect Campaign URL Alias ', 'woothemes' ), 
+								'type' => 'text', 
+								'description' => __( 'Transaction will post to this Connect campaign.  Receipts, Stats are sent and updated based on the set campaign.<br>allowed characters <code>a-zA-Z0-9-_</code><br> Maximum 50 characters.', 'woothemes' ), 
+								'default' => '',
+								'maxlength' => 200,
+								
+							),							
 				
 							
 				'Paymentmethods' => array(
@@ -394,6 +403,8 @@ function woocommerce_clickandpledge_init() {
 		return ob_get_clean();
 
 	}
+
+
 	 public function generate_acceptedcreditcards_details_html() {
 		ob_start();
 		?>
@@ -508,7 +519,10 @@ function woocommerce_clickandpledge_init() {
 					<tr class="maxnoofinstlmnts"><td><div id="maxnoofinstlmntslbl_div">
 					<label><input type="text" name="woocommerce_clickandpledge_maxnoofinstallments" id="woocommerce_clickandpledge_maxnoofinstallments"  placeholder='Maximum number of installments allowed' value="<?php if(esc_attr( $this->recurring_details['maxnoofinstallments'] ) == ""){ echo "Maximum number of installments allowed";}else{ echo esc_attr( $this->recurring_details['maxnoofinstallments']);}  ?>"/></label></div></td>
 					<td><div id="maxnoofinstlmnts_div"><input type="text" id="woocommerce_clickandpledge_maxrecurrings_Subscription" name="woocommerce_clickandpledge_maxrecurrings_Subscription"  maxlength="3" value="<?php echo esc_attr( $this->recurring_details['maxrecurrings_Subscription'] ) ?>"/></div></td></tr>
+
 					<script language="javascript">
+
+
 					jQuery('#woocommerce_clickandpledge_dfltnoofpaymnts').keypress(function(e) {
 						var a = [];
 						var k = e.which;
@@ -529,6 +543,24 @@ function woocommerce_clickandpledge_init() {
 						if (!(a1.indexOf(k1)>=0))
 							e.preventDefault();
 					});
+					jQuery('#woocommerce_clickandpledge_ConnectCampaignAlias').change(function(e) {
+					campaignlimitText(jQuery('#woocommerce_clickandpledge_ConnectCampaignAlias'),'',50);
+					});
+					function campaignlimitText(limitField, limitCount, limitNum) {
+					var regex = new RegExp("^[a-zA-Z0-9-_]+$");
+					var isValidcamp = regex.test(limitField.val());
+					if(!isValidcamp){ limitField.val(limitField.val().replace(/[^a-zA-Z0-9-_]/, "")); }
+					if (limitField.val().length > limitNum) {
+						limitField.val( limitField.val().substring(0, limitNum) );
+					} else {
+						//limitCount.html (limitNum - limitField.val().length);
+					}
+				}
+								
+				jQuery('#woocommerce_clickandpledge_ConnectCampaignAlias').keyup(function(){
+					campaignlimitText(jQuery('#woocommerce_clickandpledge_ConnectCampaignAlias'),'',50);
+				});	
+					
 					jQuery('#woocommerce_clickandpledge_CustomPayment_Titles').change(function(e) {
 					var paymethods1 = []; var paymethods_titles1 =[];var str1 = '';
 					if(jQuery('#woocommerce_clickandpledge_CreditCard').is(':checked')) {
@@ -997,6 +1029,7 @@ function woocommerce_clickandpledge_init() {
 						jQuery('#woocommerce_clickandpledge_AccountID').focus();
 						return false;
 					}
+
 					if(jQuery('#woocommerce_clickandpledge_AccountID').val().length > 10)
 					{
 						alert('Please enter only 10 digits');
@@ -1365,8 +1398,13 @@ function woocommerce_clickandpledge_init() {
 				
 				
 				</script>
-				<table  style="border-collapse:collapse;border: 0px solid rgba(0, 0, 0, 0.1) !important;"><tr><td colspan="2" style="border:none;outline:none;">
-				
+				<table  style="border-collapse:collapse;border: 0px solid rgba(0, 0, 0, 0.1) !important;">
+				<?php
+				if(in_array("Credit Card", $this->Paymentmethods) || in_array("eCheck", $this->Paymentmethods))
+				{
+				?>
+				<tr><td colspan="2" style="border:none;outline:none;">
+
 					<label for="clickandpledge_cart_type">
 					<!--<input type="checkbox" name="clickandpledge_isRecurring" id="clickandpledge_isRecurring" onclick="isRecurring()">&nbsp;-->
 					<strong><?php echo __($this->settings['RecurringLabel'], 'woocommerce') ?> </strong></label>
@@ -1504,7 +1542,8 @@ function woocommerce_clickandpledge_init() {
 						
 				<?php }
 				
-				?></td></tr></table>
+				?></td></tr>
+				<?php }?></table>
 				<?php
 				echo '<span style="width:980px" id="payment_methods"> <strong>Payment Methods</strong> <br><br> ';
 			     if(WC()->cart->total == 0 ){
@@ -1629,7 +1668,7 @@ function woocommerce_clickandpledge_init() {
 				</p>
 				<p class="form-row form-row-last">
 					<label for="clickandpledge_card_csc"><?php _e("Card Verification (CVV)", 'woocommerce') ?> <span class="required">*</span></label>
-					<input type="text" class="input-text" id="clickandpledge_card_csc" name="clickandpledge_card_csc" maxlength="4" style="width:59px" placeholder="cvv"/>					
+					<input type="text" class="input-text" id="clickandpledge_card_csc" name="clickandpledge_card_csc" maxlength="4" style="width:100px" placeholder="cvv"/>					
 					<span class="help clickandpledge_card_csc_description"></span>
 				</p>
 				
@@ -1767,6 +1806,7 @@ function woocommerce_clickandpledge_init() {
 				$posted_settings = array();
 				$posted_settings['AccountID'] = $this->AccountID;
 				$posted_settings['AccountGuid'] = $this->AccountGuid;
+				$posted_settings['ConnectCampaignAlias'] = $this->ConnectCampaignAlias;
 				$posted_settings['cnp_email_customer'] = $this->settings['cnp_email_customer'];
 				$posted_settings['Total'] = $order->order_total;
 				$posted_settings['OrderMode'] = $this->get_option( 'testmode' );//$this->testmode
