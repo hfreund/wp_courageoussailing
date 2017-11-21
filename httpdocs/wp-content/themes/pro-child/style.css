@@ -250,6 +250,8 @@ a.badge:before {
 .post .entry-thumb {
     max-height: calc(100vh - 280px);
     text-align: center;
+    display: flex;
+    align-items: center;
 }
 
 .post .entry-wrap .x-brand.text {
@@ -799,27 +801,6 @@ body:not(.rtl) .ubermenu.ubermenu-horizontal .ubermenu-item-level-0:first-child:
 
 /*   End Sidebar   */
 
-/*   Pricing Table   */
-
-    /*line-height: initial;
-    padding: 15px;
-    border: none;
-    border-right: 1px solid #ccc;
-}*/
-
-.x-pricing-column:last-of-type h2 {
-    border: none;
-}
-
-.x-pricing-column-info {
-    border: none;
-    border-right: 1px solid #ccc;
-}
-
-.x-pricing-column:last-of-type .x-pricing-column-info {
-    border: none;
-}
-
 a.x-btn.x-btn-large {
     background: #0073aa;
     text-shadow: none;
@@ -832,16 +813,6 @@ a.x-btn.x-btn-large {
 
 li.x-li-icon {
     font-size: 14px;
-}
-
-.x-pricing-column-info ul>li {
-    font-size: 14px;
-    font-family: open sans, arial;
-    font-weight: 300;
-}
-
-.x-pricing-column-info ul>li [class*="x-icon-"] {
-    display: none;
 }
 
 /*   End Pricing Table   */
@@ -877,19 +848,17 @@ li.x-li-icon {
 }
 
 .product_tag-course .woocommerce-variation-add-to-cart .quantity {
-    display: none !important;
+    display: none;
 }
 
 .woocommerce .product .summary.summary.entry-summary {
     width: 45%;
+    max-width: 400px;
+    margin-right: 40px;
     float: left;
     clear: none;
     box-shadow: 0 2px 15px 5px rgba(150,150,150,0.15);
     padding: 0 2em 3em;
-}
-.product-description {
-    float: right;
-    width: 50%;
 }
 body.woocommerce div.product .images {
     overflow: hidden;
@@ -934,10 +903,8 @@ body.woocommerce div.product .woocommerce-tabs {
         float: none;
         clear: none;
         margin-top: 0;
-    }
-    .product-description {
-        float: none;
-        width: 100%;
+        max-width: 100%;
+        margin-right: 0;
     }
     body.woocommerce div.product .woocommerce-tabs {
         float: none;
@@ -984,26 +951,31 @@ body .woocommerce li.product .onsale {
     left: 8px;
 }
 
-body .woocommerce .onsale {
-    position: absolute;
-    display: block;
-    width: 100%;
-    height: initial;
-    font-size: 1.4rem;
-    line-height: inherit;
-    text-align: center;
-    text-transform: none;
-    color: #fff;
+.woocommerce .entry-content .onsale {
+    height: 45px;
+    width: calc(100% + 4em);
+    font-weight: 600;
     background-color: #e74c3c;
-    z-index: 1;
-    -webkit-transform: none;
-    -ms-transform: none;
-    transform: none;
+    position: relative;
+    transition: initial;
+    -webkit-transform: initial;
+    -moz-transform: initial;
+    line-height: 3;
+    left: -2em;
+    font-size: initial;
+    top: -2em;
+    margin-bottom: 1em;
+}
+.woocommerce .entry-content .product .images .onsale {
+    top: 15px;
+    left: -65px;
+    line-height: 3.5;
 }
 
 .woocommerce .entry-content span.onsale.wc-memberships-member-discount {
     left: -2em;
     right: 0;
+    top: 0;
     margin: 0;
     position: relative;
     display: block;
@@ -1332,6 +1304,103 @@ ol#amounts {
     margin-bottom: 1em;
 }
 
+.card-flex-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+}
+.card {
+    border-radius: 4px;
+    border: 1px solid #d3d5d7;
+    transition: 150ms ease;
+    flex-basis: 320px;
+    margin: 0 1em 1.5em 0;
+}
+
+.card .img-wrapper {
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    display: flex;
+    height: 260px;
+    align-items:center;
+}
+.card .img-wrapper img {
+    height: 100%;
+    width: auto;
+    overflow:hidden;
+    
+}
+.img-wrapper > #fleet-r19 {
+    background-image: url('/wp-content/uploads/2016/06/core-fleet-membership-400x400.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    height: 260px;
+    width: 100%;
+}
+.img-wrapper > #fleet-j22 {
+    background-image: url('/wp-content/uploads/2017/11/Flip-Flop-Regatta-117-compressor.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    height: 260px;
+    width: 100%;
+}
+.img-wrapper > #fleet-j80 {
+    background-image: url('/wp-content/uploads/2017/11/Karen-Davidson-DSC_0535_cropped-compressor.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    height: 260px;
+    width: 100%;
+}
+.img-wrapper > #fleet-cruising {
+    background-image: url('/wp-content/uploads/2016/06/cruising-broomstick-400x400.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    height: 260px;
+    width: 100%;
+}
+.card:hover {
+    box-shadow: 0 1px 10px 1px #d3d5d7;
+    border: 1px solid #c3c5c7;
+    transition: 150ms ease;
+}
+
+.card .content-wrapper {
+    padding: 1.25em;
+    display: flex;
+    flex-flow: column;
+}
+
+.card h4 {
+    margin: 0 0 .4em;
+    font-size: 1.5em;
+    border-bottom: 1px dotted;
+    padding-bottom: 0.25em;
+    transition: 150ms ease;
+}
+
+.card:hover h4 {
+    border-bottom: 1px solid #0e92ff;
+    color: #0e92ff;
+    transition: 150ms ease;
+}
+
+.card > a > .content-wrapper > ul {
+    list-style: none;
+    margin: 0 0 1em;
+    color: #535557;
+}
+.card > a > .content-wrapper > ul > li {
+    border-bottom: 1px solid #d3d5d7;
+    padding: 0 0.25em 0.4em 0.25em;
+    margin-bottom: 0.4em;
+    font-size: 0.9em;
+}
+
 .woocommerce-cart-tab {
     top: calc(100% - 88px) !important;
     border-radius: 3px;
@@ -1415,7 +1484,10 @@ body .woocommerce .cart .actions .coupon label {
 body .woocommerce .cart .actions .coupon input[type="submit"] {
     display: inline-block;
 }
-body .woocommerce .cart .actions > input {
+.woocommerce .cart .actions > input[disabled] {
+    opacity: 0.5;
+}
+.woocommerce .cart .actions > input[name="apply_coupon"] {
     display: none;
 }
 select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input{
@@ -1480,3 +1552,52 @@ body .woocommerce .cart-collaterals .cart_totals {
         max-width: 200px;
     }
 }
+
+/* Begin Footer */
+
+footer .x-bar-content-area h5 {
+   font-size: 0.9rem;
+   font-weight: 100;
+   letter-spacing: 0.05em;
+   margin-top: 0.5em;
+   text-align: center;
+}
+
+footer .x-bar-content-area h6 {
+   font-size: 0.8rem;
+   font-weight: 700;
+   margin-top: 5px;
+}
+
+footer .x-bar-content-area hr {
+   margin: 1em 0;
+}
+
+footer .x-bar-content-area {
+   font-size: 0.8rem;
+}
+
+footer .x-bar-content-area p {
+   margin-bottom: 0.5rem;
+}
+
+footer .x-bar-content-area .x-brand img {
+   margin: 0 0 12px;
+   max-width: 240px;
+}
+
+footer .x-bar-content-area .x-brand {
+   display: block;
+   width: 100%;
+   text-align: center;
+}
+
+/* End Footer */
+
+/* Begin Modal Content */
+
+.x-modal-content h4 {
+    margin: 0.5em 0 1em;
+}
+
+/* End Modal Content */
