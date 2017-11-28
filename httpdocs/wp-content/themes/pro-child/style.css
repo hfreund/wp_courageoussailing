@@ -877,7 +877,13 @@ body.woocommerce div.product .woocommerce-tabs {
   	clear: none;
     margin-top: 0em;
 }
+body.woocommerce div.product.post-1399 .images, body.woocommerce div.product.post-1470 .images, body.woocommerce div.product.post-1462 .images {
+    display: none;
+}
 
+body.woocommerce div.product.post-1399 h1.product_title, body.woocommerce div.product.post-1470 h1.product_title, body.woocommerce div.product.post-1462 h1.product_title {
+    padding-top: 1em;
+}
 .woocommerce div.product .x-nav.x-nav-tabs.one-up.top {
     display: none;
 }
@@ -1135,6 +1141,10 @@ ol#amounts {
 
 #amounts li.span-2 {
     width: 65%;
+    margin-right: 0;
+}
+#amounts li.span-3 {
+    width: 100%;
     margin-right: 0;
 }
 
@@ -1679,7 +1689,15 @@ footer .x-bar-content-area .x-brand {
     margin: 0.5em 0 0.25em;
 }
 .modal-wrapper .x-text-content h5 {
-    margin: 0 0 0.5em;
+    margin: 0.5em 0 0.25em;
+}
+.modal-wrapper .x-text-content p {
+    margin-bottom: 0.25em;
+}
+@media (max-width:767px) {
+    .modal-wrapper iframe {
+        max-height: 215px;
+    }
 }
 
 /* End Modal Content */
