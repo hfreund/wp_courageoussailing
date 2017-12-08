@@ -32,14 +32,14 @@ class WC_Geolocation {
 		'ipecho'            => 'http://ipecho.net/plain',
 		'ident'             => 'http://ident.me',
 		'whatismyipaddress' => 'http://bot.whatismyipaddress.com',
-		'ip.appspot'        => 'http://ip.appspot.com'
+		'ip.appspot'        => 'http://ip.appspot.com',
 	);
 
 	/** @var array API endpoints for geolocating an IP address */
 	private static $geoip_apis = array(
-		'freegeoip'        => 'https://freegeoip.net/json/%s',
-		'telize'           => 'http://www.telize.com/geoip/%s',
-		'geoip-api.meteor' => 'http://geoip-api.meteor.com/lookup/%s'
+		'freegeoip'  => 'https://freegeoip.net/json/%s',
+		'ipinfo.io'  => 'https://ipinfo.io/%s/json',
+		'ip-api.com' => 'http://ip-api.com/json/%s',
 	);
 
 	/**
@@ -67,16 +67,43 @@ class WC_Geolocation {
 	}
 
 	/**
+	 * Check if is a valid IP address.
+	 *
+	 * @since  3.0.6
+	 * @param  string $ip_address IP address.
+	 * @return string|bool The valid IP address, otherwise false.
+	 */
+	private static function is_ip_address( $ip_address ) {
+		// WP 4.7+ only.
+		if ( function_exists( 'rest_is_ip_address' ) ) {
+			return rest_is_ip_address( $ip_address );
+		}
+
+		// Support for WordPress 4.4 to 4.6.
+		if ( ! class_exists( 'Requests_IPv6', false ) ) {
+			include_once( dirname( __FILE__ ) . '/vendor/class-requests-ipv6.php' );
+		}
+
+		$ipv4_pattern = '/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/';
+
+		if ( ! preg_match( $ipv4_pattern, $ip_address ) && ! Requests_IPv6::check_ipv6( $ip_address ) ) {
+			return false;
+		}
+
+		return $ip_address;
+	}
+
+	/**
 	 * Get current user IP Address.
 	 * @return string
 	 */
 	public static function get_ip_address() {
-		if ( isset( $_SERVER['X-Real-IP'] ) ) {
-			return $_SERVER['X-Real-IP'];
+		if ( isset( $_SERVER['HTTP_X_REAL_IP'] ) ) {
+			return $_SERVER['HTTP_X_REAL_IP'];
 		} elseif ( isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
 			// Proxy servers can send through this header like this: X-Forwarded-For: client1, proxy1, proxy2
 			// Make sure we always only send through the first IP in the list which should always be the client IP.
-			return trim( current( explode( ',', $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			return (string) self::is_ip_address( trim( current( explode( ',', $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) ) );
 		} elseif ( isset( $_SERVER['REMOTE_ADDR'] ) ) {
 			return $_SERVER['REMOTE_ADDR'];
 		}
@@ -90,8 +117,12 @@ class WC_Geolocation {
 	 * @return string
 	 */
 	public static function get_external_ip_address() {
-		$transient_name      = 'external_ip_address_' . self::get_ip_address();
-		$external_ip_address = get_transient( $transient_name );
+		$external_ip_address = '0.0.0.0';
+
+		if ( '' !== self::get_ip_address() ) {
+			$transient_name      = 'external_ip_address_' . self::get_ip_address();
+			$external_ip_address = get_transient( $transient_name );
+		}
 
 		if ( false === $external_ip_address ) {
 			$external_ip_address     = '0.0.0.0';
@@ -130,6 +161,12 @@ class WC_Geolocation {
 			// If GEOIP is enabled in CloudFlare, we can use that (Settings -> CloudFlare Settings -> Settings Overview)
 			if ( ! empty( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ) {
 				$country_code = sanitize_text_field( strtoupper( $_SERVER['HTTP_CF_IPCOUNTRY'] ) );
+			// WP.com VIP has a variable available.
+			} elseif ( ! empty( $_SERVER['GEOIP_COUNTRY_CODE'] ) ) {
+				$country_code = sanitize_text_field( strtoupper( $_SERVER['GEOIP_COUNTRY_CODE'] ) );
+			// VIP Go has a variable available also.
+			} elseif ( ! empty( $_SERVER['HTTP_X_COUNTRY_CODE'] ) ) {
+				$country_code = sanitize_text_field( strtoupper( $_SERVER['HTTP_X_COUNTRY_CODE'] ) );
 			} else {
 				$ip_address = $ip_address ? $ip_address : self::get_ip_address();
 
@@ -156,7 +193,7 @@ class WC_Geolocation {
 
 		return array(
 			'country' => $country_code,
-			'state'   => ''
+			'state'   => '',
 		);
 	}
 
@@ -176,10 +213,10 @@ class WC_Geolocation {
 	 * Update geoip database. Adapted from https://wordpress.org/plugins/geoip-detect/.
 	 */
 	public static function update_database() {
-		$logger = new WC_Logger();
+		$logger = wc_get_logger();
 
 		if ( ! is_callable( 'gzopen' ) ) {
-			$logger->add( 'geolocation', 'Server does not support gzopen' );
+			$logger->notice( 'Server does not support gzopen', array( 'source' => 'geolocation' ) );
 			return;
 		}
 
@@ -187,7 +224,7 @@ class WC_Geolocation {
 
 		$tmp_databases = array(
 			'v4' => download_url( self::GEOLITE_DB ),
-			'v6' => download_url( self::GEOLITE_IPV6_DB )
+			'v6' => download_url( self::GEOLITE_IPV6_DB ),
 		);
 
 		foreach ( $tmp_databases as $tmp_database_version => $tmp_database_path ) {
@@ -202,11 +239,14 @@ class WC_Geolocation {
 					gzclose( $gzhandle );
 					fclose( $handle );
 				} else {
-					$logger->add( 'geolocation', 'Unable to open database file' );
+					$logger->notice( 'Unable to open database file', array( 'source' => 'geolocation' ) );
 				}
 				@unlink( $tmp_database_path );
 			} else {
-				$logger->add( 'geolocation', 'Unable to download GeoIP Database: ' . $tmp_database_path->get_error_message() );
+				$logger->notice(
+					'Unable to download GeoIP Database: ' . $tmp_database_path->get_error_message(),
+					array( 'source' => 'geolocation' )
+				);
 			}
 		}
 	}
@@ -217,8 +257,8 @@ class WC_Geolocation {
 	 * @return string
 	 */
 	private static function geolocate_via_db( $ip_address ) {
-		if ( ! class_exists( 'WC_Geo_IP' ) ) {
-			include_once( 'class-wc-geo-ip.php' );
+		if ( ! class_exists( 'WC_Geo_IP', false ) ) {
+			include_once( WC_ABSPATH . 'includes/class-wc-geo-ip.php' );
 		}
 
 		$gi = new WC_Geo_IP();
@@ -257,12 +297,15 @@ class WC_Geolocation {
 
 				if ( ! is_wp_error( $response ) && $response['body'] ) {
 					switch ( $service_name ) {
-						case 'geoip-api.meteor' :
+						case 'ipinfo.io' :
 							$data         = json_decode( $response['body'] );
 							$country_code = isset( $data->country ) ? $data->country : '';
 						break;
+						case 'ip-api.com' :
+							$data         = json_decode( $response['body'] );
+							$country_code = isset( $data->countryCode ) ? $data->countryCode : '';
+						break;
 						case 'freegeoip' :
-						case 'telize' :
 							$data         = json_decode( $response['body'] );
 							$country_code = isset( $data->country_code ) ? $data->country_code : '';
 						break;
